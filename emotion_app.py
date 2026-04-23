@@ -4,6 +4,7 @@ from nltk.corpus import stopwords
 import string
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.naive_bayes import MultinomialNB
+from sklearn.datasets import fetch_20newsgroups
 import streamlit as st
 import difflib
 
@@ -51,15 +52,12 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ===============================
-# LOAD DATA (STABLE DATASET)
+# LOAD DATA (NO INTERNET)
 # ===============================
 @st.cache_data
 def load_data():
-    url = "https://raw.githubusercontent.com/datasets/sentiment-analysis/master/data/train.csv"
-    df = pd.read_csv(url)
-
-    texts = df['text'].astype(str).tolist()[:20000]
-
+    data = fetch_20newsgroups(subset='train')
+    texts = data.data[:20000]
     return pd.DataFrame(texts, columns=["text"])
 
 df = load_data()
@@ -70,8 +68,8 @@ df = load_data()
 def label_emotion(text):
     text = text.lower()
     
-    happy_words = ["love", "happy", "great", "good", "awesome", "fantastic", "glad"]
-    sad_words = ["sorry", "sad", "bad", "cry", "pain", "upset", "hurt"]
+    happy_words = ["love", "happy", "great", "good", "awesome", "fantastic"]
+    sad_words = ["sorry", "sad", "bad", "cry", "pain", "upset"]
     angry_words = ["kill", "hate", "angry", "mad", "furious"]
 
     score = {"happy": 0, "sad": 0, "angry": 0}
@@ -113,7 +111,7 @@ df["clean_text"] = df["text"].apply(clean_text)
 # ===============================
 @st.cache_resource
 def train_model():
-    vectorizer = TfidfVectorizer()
+    vectorizer = TfidfVectorizer(max_features=5000)
     X = vectorizer.fit_transform(df["clean_text"])
     y = df["emotion"]
 
