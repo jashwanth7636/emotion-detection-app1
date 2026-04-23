@@ -6,7 +6,6 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.naive_bayes import MultinomialNB
 import streamlit as st
 import difflib
-import requests
 
 # ===============================
 # PAGE CONFIG
@@ -52,13 +51,15 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ===============================
-# LOAD DATA (ONLINE)
+# LOAD DATA (STABLE DATASET)
 # ===============================
 @st.cache_data
 def load_data():
-    url = "https://raw.githubusercontent.com/selva86/datasets/master/newsgroups.json"
-    data = requests.get(url).json()
-    texts = [d['content'] for d in data][:20000]
+    url = "https://raw.githubusercontent.com/datasets/sentiment-analysis/master/data/train.csv"
+    df = pd.read_csv(url)
+
+    texts = df['text'].astype(str).tolist()[:20000]
+
     return pd.DataFrame(texts, columns=["text"])
 
 df = load_data()
