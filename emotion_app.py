@@ -6,6 +6,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.naive_bayes import MultinomialNB
 import streamlit as st
 import difflib
+import requests
 
 # ===============================
 # PAGE CONFIG
@@ -13,49 +14,33 @@ import difflib
 st.set_page_config(page_title="Emotion Detection", layout="centered")
 
 # ===============================
-# CUSTOM CSS (UI DESIGN)
+# UI DESIGN
 # ===============================
 st.markdown("""
 <style>
-body {
-    background-color: #0e1117;
-}
-
-/* Title */
 .big-title {
     font-size: 42px;
     font-weight: bold;
     text-align: center;
     color: #ffffff;
 }
-
-/* Subtitle */
 .subtitle {
     text-align: center;
     font-size: 18px;
     color: #bbbbbb;
     margin-bottom: 30px;
 }
-
-/* Input box */
 .stTextInput > div > div > input {
     border-radius: 10px;
     padding: 12px;
-    font-size: 16px;
 }
-
-/* Button */
 .stButton>button {
     border-radius: 10px;
     height: 45px;
     width: 150px;
-    font-size: 16px;
     background-color: #4CAF50;
     color: white;
-    border: none;
 }
-
-/* Result box */
 .result-box {
     padding: 20px;
     border-radius: 15px;
@@ -67,29 +52,19 @@ body {
 """, unsafe_allow_html=True)
 
 # ===============================
-# SETUP
+# LOAD DATA (ONLINE)
 # ===============================
-nltk.download('stopwords')
+@st.cache_data
+def load_data():
+    url = "https://raw.githubusercontent.com/selva86/datasets/master/newsgroups.json"
+    data = requests.get(url).json()
+    texts = [d['content'] for d in data][:20000]
+    return pd.DataFrame(texts, columns=["text"])
 
-# ===============================
-# LOAD DATASET
-# ===============================
-file = open("cornell movie-dialogs corpus/movie_lines.txt", encoding='utf-8', errors='ignore')
-lines = file.readlines()
-
-dialogues = []
-for line in lines:
-    parts = line.split(" +++$+++ ")
-    if len(parts) == 5:
-        dialogues.append(parts[4].strip())
-
-df = pd.DataFrame(dialogues, columns=["text"])
-
-# Reduce dataset for speed
-df = df.sample(20000, random_state=42)
+df = load_data()
 
 # ===============================
-# IMPROVED LABELING
+# EMOTION LABELING
 # ===============================
 def label_emotion(text):
     text = text.lower()
@@ -120,6 +95,7 @@ df["emotion"] = df["text"].apply(label_emotion)
 # ===============================
 # CLEAN TEXT
 # ===============================
+nltk.download('stopwords')
 stop_words = set(stopwords.words('english'))
 
 def clean_text(text):
