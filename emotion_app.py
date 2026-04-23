@@ -4,7 +4,6 @@ from nltk.corpus import stopwords
 import string
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.naive_bayes import MultinomialNB
-from sklearn.datasets import fetch_20newsgroups
 import streamlit as st
 import difflib
 
@@ -52,13 +51,18 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ===============================
-# LOAD DATA (NO INTERNET)
+# LOAD DATA (CORNELL SUBSET)
 # ===============================
 @st.cache_data
 def load_data():
-    data = fetch_20newsgroups(subset='train')
-    texts = data.data[:20000]
-    return pd.DataFrame(texts, columns=["text"])
+    dialogues = []
+    with open("movie_lines_small.txt", encoding='utf-8', errors='ignore') as file:
+        for line in file:
+            parts = line.split(" +++$+++ ")
+            if len(parts) == 5:
+                dialogues.append(parts[4].strip())
+
+    return pd.DataFrame(dialogues[:5000], columns=["text"])
 
 df = load_data()
 
